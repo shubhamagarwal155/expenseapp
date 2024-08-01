@@ -5,16 +5,17 @@ import (
 	"log"
 
 	"github.com/go-sql-driver/mysql"
-	"go.mod/cmd/api"
-	"go.mod/cmd/db"
+	"go.mod/pkg/api"
+	"go.mod/pkg/conf"
 )
 
 func main() {
-	db, error := db.NewMysqlStorage(mysql.Config{
-		User:   "root",
-		Passwd: "root",
-		Addr:   "127.0.1:3306",
-		DBName: "expenseapp",
+	db, error := conf.NewMysqlStorage(mysql.Config{
+		User:                 "root",
+		Passwd:               "root",
+		Addr:                 "127.0.1:3306",
+		DBName:               "expenseapp",
+		AllowNativePasswords: true,
 	})
 
 	if error != nil {
@@ -22,12 +23,16 @@ func main() {
 	} else {
 		err := db.Ping()
 		if err != nil {
-			log.Fatal("There was a problem connecting to the database: ?", err)
+			log.Fatal("There was a problem connecting to the database:", err)
 		} else {
 			fmt.Println("Connection to the database was successful")
 		}
 	}
 
-	server := api.NewApiServer("localhost:8000", db)
-	server.Run()
+	server := api.NewApiServer(db)
+	err := server.Run("localhost:8000")
+
+	if err != nil {
+		log.Fatal("Error starting server : ", err.Error())
+	}
 }
